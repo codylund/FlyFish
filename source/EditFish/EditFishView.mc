@@ -25,7 +25,7 @@ class EditFishView extends WatchUi.View {
     function onUpdate(dc as Dc) as Void {
         _logger.log("onUpdate()");
 
-        var fish = FishDb.getAll()[EditFishStorage.getIndex()];
+        var fish = FishDb.get(EditFishStorage.getIndex());
         _logger.log("Showing fish stats for idx=" + EditFishStorage.getIndex() + ", species=" + fish.species);
         findDrawableById("edit_fish_time").setText(DateFormatter.toString(new Time.Moment(fish.time)));
         findDrawableById("edit_fish_species").setText(fish.species);
@@ -66,6 +66,40 @@ class EditFishDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onSelect() {
-        WatchUi.switchToView(new AddFishView(), new AddFishDelegate(), WatchUi.SLIDE_UP);
+        WatchUi.switchToView(new EditMenu(), new EditMenuInputDelegate(), WatchUi.SLIDE_UP);
+    }
+}
+
+class EditMenu extends WatchUi.Menu2 {
+    function initialize() {
+        Menu2.initialize({:title=>"Options"});
+        addItem(new WatchUi.MenuItem("Edit", null, "edit", {}));
+        addItem(new WatchUi.MenuItem("Delete", null, "delete", {}));
+    }
+
+    function onShow() {
+        Menu2.onShow();
+    }
+}
+
+class EditMenuInputDelegate extends WatchUi.Menu2InputDelegate {
+    private var _logger = new Logger("EditMenuInputDelegate");
+
+    function initialize() {
+        Menu2InputDelegate.initialize();
+    }
+
+    function onSelect(item) {
+        var idx = EditFishStorage.getIndex();
+        if (item.getId().equals("edit")) {
+            _logger.log("Editing fish with index " + idx);
+            AddFishStorage.initFromFish(FishDb.get(idx));
+            AddFishStorage.setReplaceIndex(idx);
+            WatchUi.switchToView(new AddFishView(), new AddFishDelegate(), WatchUi.SLIDE_UP);
+        } else if (item.getId().equals("delete")) {
+            _logger.log("Deleting fish with index " + idx);
+            FishDb.deleteFish(idx);
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        }
     }
 }

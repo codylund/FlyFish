@@ -5,6 +5,10 @@ class FishDb {
     private static const _key_fish = "fishdb_fish";
     private static const _key_fish_count = "fishdb_count";
 
+    static function get(idx as Number) as Fish {
+        return Fish.fromSerializable(getAllSerializable()[idx]);
+    }
+
     static function getAll() as Array<Fish> {
         var fishArraySerializable = getAllSerializable();
         
@@ -30,6 +34,19 @@ class FishDb {
         var fishArray = getAllSerializable();
         fishArray.add(fish.toSerializable());
         Storage.setValue(_key_fish, fishArray);
+    }
+
+    static function deleteFish(idx as Number) {
+        var fishArray = getAllSerializable();
+        var fish = fishArray[idx];
+        fishArray.remove(fish);
+        Storage.setValue(_key_fish, fishArray);
+    }
+
+    static function replaceFish(idx as Number, newFish as Fish) {
+       var fishArray = getAllSerializable();
+       fishArray[idx] = newFish.toSerializable();
+       Storage.setValue(_key_fish, fishArray);
     }
 }
 

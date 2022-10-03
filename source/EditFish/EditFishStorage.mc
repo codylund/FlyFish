@@ -3,7 +3,6 @@ import Toybox.Application.Storage;
 class EditFishStorage {
     private static const _key_prefix = "edit_fish_";
     private static const _key_cur_idx = _key_prefix + "idx";
-
     
     static function getIndex() as Number {
         var val = Storage.getValue(_key_cur_idx);

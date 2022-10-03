@@ -40,7 +40,7 @@ class AddFishView extends WatchUi.View {
         var confirmed = AddFishStorage.getConfirmed();
         if (confirmed == null || confirmed != true) {
             _logger.log("showing confirmation.");
-            showConfirmation(species, size);
+            showConfirmation();
             return;
         }
 
@@ -52,12 +52,21 @@ class AddFishView extends WatchUi.View {
         }
 
 
-        var fish = new Fish();
-        fish.time = Time.now().value();
-        fish.loc = loc;
-        fish.species = species;
-        fish.size = size;
-        FishDb.addFish(fish);
+        var replaceIdx = AddFishStorage.getReplaceIndex();
+        if (replaceIdx == null) {
+            var fish = new Fish();
+            fish.time = Time.now().value();
+            fish.loc = loc;
+            fish.species = species;
+            fish.size = size;
+            FishDb.addFish(fish);
+        } else {
+            var fish = FishDb.get(replaceIdx);
+            fish.species = species;
+            fish.size = size;
+            FishDb.replaceFish(replaceIdx, fish);
+        }
+        AddFishStorage.resetAll();
 
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
@@ -80,10 +89,10 @@ function showSpeciesOptions() {
 }
 
 function showSizeInput() {
-    WatchUi.pushView(new FishSizeMenu(), new FishSizeMenu(), WatchUi.SLIDE_IMMEDIATE);
+    WatchUi.pushView(new FishSizeMenu(), new FishSizeInputDelegate(), WatchUi.SLIDE_IMMEDIATE);
 }
 
-function showConfirmation(species, size) {
+function showConfirmation() {
     WatchUi.pushView(new ConfirmFishMenu(), new ConfirmFishInputDelegate(), WatchUi.SLIDE_IMMEDIATE);
 }
 
@@ -94,7 +103,13 @@ function fetchLoc() {
 class AddFishDelegate extends WatchUi.BehaviorDelegate {
     function initialize() {
         BehaviorDelegate.initialize();
-        // New fish. Clear existing storage state.
+        if (AddFishStorage.getReplaceIndex() == null) {
+            // New fish. Clear existing storage state.
+            AddFishStorage.resetAll();
+        }
+    }
+
+    function onBack() {
         AddFishStorage.resetAll();
     }
 }
@@ -110,9 +125,6 @@ class FishSpeciesMenu extends WatchUi.Menu2 {
 
     function onShow() {
         Menu2.onShow();
-        // Update values.
-        update(ID_SPECIES, AddFishStorage.getSpecies());
-        update(ID_SIZE, AddFishStorage.getSize() + " in");
     }
 }
 

@@ -7,7 +7,7 @@ class AddFishStorage {
     private static const _key_confirmed = _key_prefix + "confirmed";
     private static const _key_loc_lat = _key_prefix + "loc_lat";
     private static const _key_loc_lon = _key_prefix + "loc_lon";
-
+    private static const _key_replace_idx = _key_prefix + "replace_idx";
     
     static function setSpecies(species) {
         Storage.setValue(_key_species, species);
@@ -64,10 +64,29 @@ class AddFishStorage {
         Storage.deleteValue(_key_loc_lon);
     }
 
+    static function initFromFish(fish as Fish) {
+        setSpecies(fish.species);
+        setSize(fish.size);
+        setLocation(fish.loc[0], fish.loc[1]);
+    }
+
+    static function setReplaceIndex(idx as Number) {
+        Storage.setValue(_key_replace_idx, idx);
+    }
+
+    static function getReplaceIndex() as Number {
+        return Storage.getValue(_key_replace_idx);
+    }
+
+    static function resetReplaceIndex() {
+        Storage.deleteValue(_key_replace_idx);
+    }
+
     static function resetAll() {
         resetSpecies();
         resetSize();
         resetConfirmed();
         resetLocation();
+        resetReplaceIndex();
     }
 }
