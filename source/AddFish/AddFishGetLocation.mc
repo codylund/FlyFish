@@ -7,8 +7,11 @@ class AddFishGetLocationProgressBar extends WatchUi.ProgressBar {
     
     private var _logger = new Logger("AddFishGetLocationProgressBar");
 
-    function initialize() {
+    private var _vm as AddFishViewModel;
+
+    function initialize(vm as AddFishViewModel) {
         ProgressBar.initialize("Getting location...", null);
+        _vm = vm;
         // Start listening for position.
         Position.enableLocationEvents(Position.LOCATION_ONE_SHOT, method(:onPosition));
     }
@@ -32,7 +35,7 @@ class AddFishGetLocationProgressBar extends WatchUi.ProgressBar {
 
         _logger.log("Got location: " + lat + ", " + lon);
 
-        AddFishStorage.setLocation(lat, lon);
+        _vm.fish.loc = [lat, lon];
 
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }

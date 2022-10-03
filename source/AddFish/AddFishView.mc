@@ -7,9 +7,11 @@ using Toybox.Time;
 class AddFishView extends WatchUi.View {
 
     private var _logger = new Logger("AddFishView");
+    private var _vm as AddFishViewmodel;
 
-    function initialize() {
+    function initialize(vm as AddFishViewModel) {
         View.initialize();
+        _vm = vm;
     }
 
     // Load your resources here
@@ -23,50 +25,31 @@ class AddFishView extends WatchUi.View {
     function onShow() as Void {
         _logger.log("onShow()");
 
-        var species = AddFishStorage.getSpecies();
-        if (species == null) {
+        if (_vm.fish.species == null) {
             _logger.log("Showing species options.");
-            showSpeciesOptions();
+            showSpeciesOptions(_vm);
             return;
         }
 
-        var size = AddFishStorage.getSize();
-        if (size == null) {
+        if (_vm.fish.size == null) {
             _logger.log("showing size input.");
-            showSizeInput();
+            showSizeInput(_vm);
             return;
         }
 
-        var confirmed = AddFishStorage.getConfirmed();
-        if (confirmed == null || confirmed != true) {
+        if (_vm.confirmed != true) {
             _logger.log("showing confirmation.");
-            showConfirmation();
+            showConfirmation(_vm);
             return;
         }
 
-        var loc = AddFishStorage.getLocation();
-        if (loc == null) {
+        if (_vm.fish.loc == null) {
             _logger.log("fetching location");
-            fetchLoc();
+            fetchLoc(_vm);
             return;
         }
 
-
-        var replaceIdx = AddFishStorage.getReplaceIndex();
-        if (replaceIdx == null) {
-            var fish = new Fish();
-            fish.time = Time.now().value();
-            fish.loc = loc;
-            fish.species = species;
-            fish.size = size;
-            FishDb.addFish(fish);
-        } else {
-            var fish = FishDb.get(replaceIdx);
-            fish.species = species;
-            fish.size = size;
-            FishDb.replaceFish(replaceIdx, fish);
-        }
-        AddFishStorage.resetAll();
+        _vm.commit();
 
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
@@ -84,33 +67,28 @@ class AddFishView extends WatchUi.View {
     }
 }
 
-function showSpeciesOptions() {
-    WatchUi.pushView(new FishSpeciesMenu(), new FishSpeciesInputDelegate(), WatchUi.SLIDE_IMMEDIATE);
+function showSpeciesOptions(vm as AddFishViewModel) {
+    WatchUi.pushView(new FishSpeciesMenu(), new FishSpeciesInputDelegate(vm), WatchUi.SLIDE_IMMEDIATE);
 }
 
-function showSizeInput() {
-    WatchUi.pushView(new FishSizeMenu(), new FishSizeInputDelegate(), WatchUi.SLIDE_IMMEDIATE);
+function showSizeInput(vm as AddFishViewModel) {
+    WatchUi.pushView(new FishSizeMenu(), new FishSizeInputDelegate(vm), WatchUi.SLIDE_IMMEDIATE);
 }
 
-function showConfirmation() {
-    WatchUi.pushView(new ConfirmFishMenu(), new ConfirmFishInputDelegate(), WatchUi.SLIDE_IMMEDIATE);
+function showConfirmation(vm as AddFishViewModel) {
+    WatchUi.pushView(new ConfirmFishMenu(vm), new ConfirmFishInputDelegate(vm), WatchUi.SLIDE_IMMEDIATE);
 }
 
-function fetchLoc() {
-    WatchUi.pushView(new AddFishGetLocationProgressBar(), new AddFishGetLocationBehaviorDelegate(), WatchUi.SLIDE_IMMEDIATE);
+function fetchLoc(vm as AddFishViewModel) {
+    WatchUi.pushView(new AddFishGetLocationProgressBar(vm), new AddFishGetLocationBehaviorDelegate(), WatchUi.SLIDE_IMMEDIATE);
 }
 
 class AddFishDelegate extends WatchUi.BehaviorDelegate {
     function initialize() {
         BehaviorDelegate.initialize();
-        if (AddFishStorage.getReplaceIndex() == null) {
-            // New fish. Clear existing storage state.
-            AddFishStorage.resetAll();
-        }
     }
 
     function onBack() {
-        AddFishStorage.resetAll();
     }
 }
 
@@ -131,8 +109,11 @@ class FishSpeciesMenu extends WatchUi.Menu2 {
 class FishSpeciesInputDelegate extends WatchUi.Menu2InputDelegate {
     private var _logger = new Logger("FishSpeciesInputDelegate");
 
-    function initialize() {
+    private var _vm as AddFishViewmodel;
+
+    function initialize(vm as AddFishViewModel) {
         Menu2InputDelegate.initialize();
+        _vm = vm;
     }
 
     function onSelect(item) {
@@ -140,7 +121,7 @@ class FishSpeciesInputDelegate extends WatchUi.Menu2InputDelegate {
 
         _logger.log("Setting species to " + species);
 
-        AddFishStorage.setSpecies(species);
+        _vm.fish.species = species;
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 }
@@ -158,8 +139,11 @@ class FishSizeMenu extends WatchUi.Menu2 {
 class FishSizeInputDelegate extends WatchUi.Menu2InputDelegate {
     private var _logger = new Logger("FishSizeInputDelegate");
 
-    function initialize() {
+    private var _vm as AddFishViewmodel;
+
+    function initialize(vm as AddFishViewModel) {
         Menu2InputDelegate.initialize();
+        _vm = vm;
     }
 
     function onSelect(item) {
@@ -167,7 +151,7 @@ class FishSizeInputDelegate extends WatchUi.Menu2InputDelegate {
 
         _logger.log("Setting size to " + size);
 
-        AddFishStorage.setSize(item.getId());
+        _vm.fish.size = item.getId();
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     }
 }
@@ -178,8 +162,11 @@ class ConfirmFishMenu extends WatchUi.Menu2 {
     static const ID_SIZE = "size";
     static const ID_OK = "ok";
 
-    function initialize() {
+    private var _vm as AddFishViewmodel;
+
+    function initialize(vm as AddFishViewModel) {
         Menu2.initialize({:title=>"Add a fish"});
+        _vm = vm;
         addItem(new WatchUi.MenuItem("Species", null, ID_SPECIES, {}));
         addItem(new WatchUi.MenuItem("Size", null, ID_SIZE, {}));
         addItem(new WatchUi.MenuItem("Ok", null, ID_OK, {}));
@@ -188,8 +175,8 @@ class ConfirmFishMenu extends WatchUi.Menu2 {
     function onShow() {
         WatchUi.Menu2.onShow();
         // Update values.
-        update(ID_SPECIES, AddFishStorage.getSpecies());
-        update(ID_SIZE, AddFishStorage.getSize() + " in");
+        update(ID_SPECIES, _vm.fish.species);
+        update(ID_SIZE, _vm.fish.size + " in");
     }
 
     private function update(id, value) {
@@ -204,20 +191,23 @@ class ConfirmFishInputDelegate extends WatchUi.Menu2InputDelegate {
     
     private var _logger = new Logger("ConfirmFishInputDelegate");
 
-    function initialize() {
+    private var _vm as AddFishViewmodel;
+
+    function initialize(vm as AddFishViewModel) {
         Menu2InputDelegate.initialize();
+        _vm = vm;
     }
 
     function onSelect(item) {
         if (item.getId().equals(ConfirmFishMenu.ID_SPECIES)) {
             _logger.log("Modifying species.");
-            showSpeciesOptions();
+            showSpeciesOptions(_vm);
         } else if (item.getId().equals(ConfirmFishMenu.ID_SIZE)) {
             _logger.log("Resetting size.");
-            showSizeInput();
+            showSizeInput(_vm);
         } else if (item.getId().equals(ConfirmFishMenu.ID_OK)) {
             _logger.log("Confirming input.");
-            AddFishStorage.setConfirmed(true);
+            _vm.confirmed = true;
             WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
         }
     }
