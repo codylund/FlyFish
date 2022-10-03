@@ -1,0 +1,11 @@
+<strings>
+    <string id="AppName">FlyFish</string>
+
+    <string id="prompt">Click the menu button</string>
+
+    <string id="menu_label_add_fish">Add a fish</string>
+    <string id="menu_label_edit_fish">Edit fish</string>
+
+    <string id="title_add_fish">Add a fish</string>
+
+</strings>

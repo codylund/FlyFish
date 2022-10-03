@@ -1,0 +1,4 @@
+<menu2 id="MainMenu" title="Menu">
+    <menu-item id="menu_add_fish" label="@Strings.menu_label_add_fish" />
+    <menu-item id="menu_edit_fish" label="@Strings.menu_label_edit_fish" />
+</menu2>
